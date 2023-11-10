@@ -109,3 +109,60 @@ module Equality where
         ≡⟨ y≡z ⟩ 
             z
         ∎
+
+    
+    import Data.Nat as Nat
+    open Nat using (ℕ; suc; zero; _+_)
+
+    data _≤_ : ℕ -> ℕ -> Set where
+        z≤n : {n : ℕ} -> 
+            zero ≤ n
+        s≤s : {m n : ℕ} -> 
+            m ≤ n ->
+            suc m ≤ suc n
+
+    postulate 
+        ≤-trans : { m n p : ℕ } → m ≤ n → n ≤ p → m ≤ p
+        ≤-refl : {n : ℕ} → n ≤ n
+
+    module ≤-Reasoning where
+        infix  1 begin≤_
+        infixr 2 _≤⟨⟩_ step-≤
+        infix  3 _≤∎
+
+        begin≤_ : ∀ {x y : ℕ}
+            → x ≤ y
+            → x ≤ y
+            
+        begin≤_ x≤y = x≤y
+
+        _≤⟨⟩_ : (x : ℕ) {y : ℕ}
+            → x ≤ y
+            → x ≤ y
+        
+        x ≤⟨⟩ x≤y = x≤y
+
+        step-≤ : (x {y z} : ℕ) → y ≤ z → x ≤ y → x ≤ z
+        step-≤ x y≤z x≤y = ≤-trans x≤y y≤z
+
+        syntax step-≤ x y≤z x≤y = x ≤⟨ x≤y ⟩ y≤z
+
+        _≤∎ : (x : ℕ)
+            → x ≤ x
+        x ≤∎ = ≤-refl
+
+    open ≤-Reasoning
+
+    postulate
+        +-monoʳ-≤ : (m p q : ℕ) → p ≤ q → (m + p) ≤ (m + q)
+        +-monoˡ-≤ : (m n p : ℕ) → m ≤ n → (m + p) ≤ (n + p)
+
+    +-mono-≤ : {m n p q : ℕ} → m ≤ n → p ≤ q -> (m + p) ≤ (n + q)
+    +-mono-≤ {m} {n} {p} {q} m≤n p≤q = 
+        begin≤ 
+            (m + p)
+        ≤⟨ +-monoˡ-≤ m n p m≤n ⟩
+            (n + p)
+        ≤⟨ +-monoʳ-≤ n p q p≤q ⟩ 
+            (n + q)
+        ≤∎
