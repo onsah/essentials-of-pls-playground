@@ -94,21 +94,22 @@ module Equality where
             → x ≡ x
         x ∎  =  refl
 
-    open ≡-Reasoning
+    module ≡-Reasoning-exercises where
+        open ≡-Reasoning
 
-    trans' : ∀ {A : Set} {x y z : A}
-        → x ≡ y
-        → y ≡ z
-        → x ≡ z
+        trans' : ∀ {A : Set} {x y z : A}
+            → x ≡ y
+            → y ≡ z
+            → x ≡ z
 
-    trans' {x = x} {y = y} {z = z} x≡y y≡z = 
-        begin 
-            x 
-        ≡⟨ x≡y ⟩
-            y
-        ≡⟨ y≡z ⟩ 
-            z
-        ∎
+        trans' {x = x} {y = y} {z = z} x≡y y≡z = 
+            begin 
+                x 
+            ≡⟨ x≡y ⟩
+                y
+            ≡⟨ y≡z ⟩ 
+                z
+            ∎
 
     
     import Data.Nat as Nat
@@ -126,15 +127,15 @@ module Equality where
         ≤-refl : {n : ℕ} → n ≤ n
 
     module ≤-Reasoning where
-        infix  1 begin≤_
-        infixr 2 _≤⟨⟩_ step-≤
-        infix  3 _≤∎
+        infix  1 begin_
+        infixr 2 _≤⟨⟩_ _≤⟨_⟩_ 
+        infix  3 _∎
 
-        begin≤_ : ∀ {x y : ℕ}
+        begin_ : ∀ {x y : ℕ}
             → x ≤ y
             → x ≤ y
             
-        begin≤_ x≤y = x≤y
+        begin_ x≤y = x≤y
 
         _≤⟨⟩_ : (x : ℕ) {y : ℕ}
             → x ≤ y
@@ -142,14 +143,12 @@ module Equality where
         
         x ≤⟨⟩ x≤y = x≤y
 
-        step-≤ : (x {y z} : ℕ) → y ≤ z → x ≤ y → x ≤ z
-        step-≤ x y≤z x≤y = ≤-trans x≤y y≤z
+        _≤⟨_⟩_ : (x {y z} : ℕ) → x ≤ y → y ≤ z → x ≤ z
+        x ≤⟨ x≤y ⟩ y≤z = ≤-trans x≤y y≤z
 
-        syntax step-≤ x y≤z x≤y = x ≤⟨ x≤y ⟩ y≤z
-
-        _≤∎ : (x : ℕ)
+        _∎ : (x : ℕ)
             → x ≤ x
-        x ≤∎ = ≤-refl
+        x ∎ = ≤-refl
 
     open ≤-Reasoning
 
@@ -159,10 +158,10 @@ module Equality where
 
     +-mono-≤ : {m n p q : ℕ} → m ≤ n → p ≤ q -> (m + p) ≤ (n + q)
     +-mono-≤ {m} {n} {p} {q} m≤n p≤q = 
-        begin≤ 
+        begin 
             (m + p)
         ≤⟨ +-monoˡ-≤ m n p m≤n ⟩
             (n + p)
         ≤⟨ +-monoʳ-≤ n p q p≤q ⟩ 
             (n + q)
-        ≤∎
+        ∎
