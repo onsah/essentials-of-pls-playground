@@ -9,7 +9,7 @@ module Isomorphism where
     g ∘ f = λ x → g (f x)
 
     postulate
-        extentionality : ∀ {A B : Set} {f g : A → B}
+        extensionality : ∀ {A B : Set} {f g : A → B}
             → (∀ (x : A) → f x ≡ g x)
             → f ≡ g
         
@@ -27,7 +27,7 @@ module Isomorphism where
         trans (cong suc (same-app m n)) (sym (+-suc m n))
 
     same : _+′_ ≡ _+_
-    same = extentionality ((λ m → extentionality (λ n → same-app m n)))
+    same = extensionality ((λ m → extensionality (λ n → same-app m n)))
 
     postulate
         ∀-extensionality : ∀ {A : Set} {B : A → Set} {f g : ∀(x : A) → B x}
