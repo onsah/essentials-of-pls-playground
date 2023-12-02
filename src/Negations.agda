@@ -98,8 +98,16 @@ module Negations where
         (<-irreflexive zero) 
         refl 
         (<-irreflexive zero)
-    trichotomy zero (suc n) = first (s≤s z≤n) (λ()) (λ())
-    trichotomy (suc m) zero = third (λ()) (λ()) (s≤s z≤n)
+    trichotomy zero (suc n) = 
+        first 
+            (s≤s z≤n) 
+            (λ()) 
+            (λ())
+    trichotomy (suc m) zero = 
+        third 
+            (λ()) 
+            (λ()) 
+            (s≤s z≤n)
     trichotomy (suc m) (suc n) = suc-trichotomy (trichotomy m n)
 
     ⊎-dual-x : {A B : Set}
@@ -114,4 +122,7 @@ module Negations where
                                     ; (inj₂ b) → refl}}; 
             to∘from = λ{ (¬a , ¬b) → refl} 
         }
+
+    em-irrefutable : {A : Set} → ¬ ¬ (A ⊎ ¬ A)
+    em-irrefutable k = k (inj₂ λ{ a → k (inj₁ a) })
   
