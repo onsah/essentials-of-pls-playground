@@ -2,7 +2,7 @@ module Quantifiers where
     import Relation.Binary.PropositionalEquality as Eq
     open Eq using (_≡_; refl; cong; sym)
     open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; _∎; step-≡)
-    open import Data.Nat using (ℕ; zero; suc; _+_; _*_)
+    open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _≤_)
     open import Relation.Nullary using (¬_)
     open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
     open import Data.Sum using (_⊎_; inj₁; inj₂)
@@ -159,4 +159,39 @@ module Quantifiers where
                 ∎
         in
         ⟨ m , p ⟩
- 
+
+    open import Data.Nat using (s≤s; z≤n)
+    open import Data.Nat.Properties using (≤-refl; suc-injective)
+
+    ∃-+-≤ : {y z : ℕ} 
+        → ∃[ x ] (x + y ≡ z) 
+        → y ≤ z
+    ∃-+-≤ ⟨ zero , refl ⟩ = ≤-refl
+    ∃-+-≤ {y = zero} {z = z} ⟨ x , x+y≡z ⟩ = z≤n
+    ∃-+-≤ {y = suc y} {z = suc z} ⟨ x , x+y≡z ⟩ = s≤s 
+        let sucx+y≡sucz = begin 
+                    suc (x + y)
+                ≡⟨ sym (+-suc x y) ⟩
+                    x + suc y
+                ≡⟨ x+y≡z ⟩
+                    suc z
+                ∎
+        in
+        (∃-+-≤ ⟨ x , suc-injective sucx+y≡sucz ⟩)
+
+    ¬∃≃∀¬ : ∀ {A : Set} {B : A → Set}
+        → (¬ ∃[ x ] B x) ≃ ∀ x → ¬ B x
+    ¬∃≃∀¬ =
+        record
+            { to      =  λ{ ¬∃ab a b → ¬∃ab ⟨ a , b ⟩ }
+            ; from    =  λ{ ∀a→¬b ⟨ a , b ⟩ → ∀a→¬b a b }
+            ; from∘to =  λ{ ¬∃xy → extensionality λ{ ⟨ x , y ⟩ → refl } }
+            ; to∘from =  λ{ ∀¬xy → refl }
+            }
+
+    ∃¬-implies-¬∀ : ∀ {A : Set} {B : A → Set}
+        → ∃[ x ] (¬ B x)
+        --------------
+        → ¬ (∀ x → B x)
+    ∃¬-implies-¬∀ ⟨ a , ¬b ⟩ a→b = ¬b (a→b a)
+  
