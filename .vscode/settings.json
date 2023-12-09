@@ -1,6 +1,13 @@
 {
     "editor.unicodeHighlight.allowedCharacters": {
         "ℕ": true,
-        "′": true
-    }
+        "′": true,
+        "×": true,
+        "⊤": true,
+        "´": true
+    },
+    "agdaMode.connection.agdaPath": "agda",
+    "editor.fontFamily": "'DejaVuSansM Nerd Font Mono', Monaco, Menlo, 'Courier New', monospace",
+    "editor.fontLigatures": true,
+    "editor.fontSize": 13
 }
