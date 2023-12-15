@@ -2,13 +2,15 @@ open import Data.Bool using (Bool; true; false; T; not)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.List using (List; _∷_; [])
 open import Data.Nat using (ℕ; zero; suc)
-open import Data.Product using (∃-syntax; _×_)
+open import Data.Product using (∃-syntax; _×_; _,_)
 open import Data.String using (String; _≟_)
 open import Data.Unit using (tt)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
 open import Relation.Nullary.Decidable using (False; toWitnessFalse)
 open import Relation.Nullary.Negation using (¬?)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; cong)
+open import Isomorphism using (_≃_; _∘_)
+open Isomorphism.≃-Reasoning
 
 module Lambda where
     Id : Set
@@ -184,19 +186,23 @@ module Lambda where
     —↠′→—↠ {m = m} {n = n} (step′ m—→n) = m —→⟨ m—→n ⟩ n ∎
     —↠′→—↠ (trans′ l—↠′m m—↠′n) = step—↠ (—↠′→—↠ l—↠′m) (—↠′→—↠ m—↠′n)
 
+    —↠-from∘to-—↠′ : ∀ {m n : Term}
+        → (m—↠n : m —↠ n)
+        → (—↠′→—↠ ( —↠→—↠′ m—↠n)) ≡ m—↠n
+    —↠-from∘to-—↠′ (_ ∎) = refl
+    —↠-from∘to-—↠′ (_ —→⟨ m—→m₁ ⟩ m₁—↠n) = 
+        let
+            ind = —↠-from∘to-—↠′ m₁—↠n
+        in
+            cong (λ x → _ —→⟨ m—→m₁ ⟩ x) ind
+
     —↠≲—↠′ : {m n : Term} 
         → m —↠ n ≲ m —↠′ n
-    -- Stuck in this :(
     —↠≲—↠′ {m = m} {n = n} = 
         record { 
             to = —↠→—↠′; 
             from = —↠′→—↠ ; 
-            from∘to = λ{ (_ ∎) → refl
-                       ; (l —→⟨ l—→m ⟩ m—↠n) → 
-                            let 
-                                x = _≲_.from∘to (—↠≲—↠′) m—↠n
-                            in 
-                                {!   !} } 
+            from∘to = —↠-from∘to-—↠′
         }
     
     postulate
@@ -265,4 +271,114 @@ module Lambda where
         —→⟨ ξ-suc β-zero ⟩ 
             `suc (`suc `zero) 
         ∎
-                  
+
+    infixr 7 _⇒_
+
+    data Type : Set where
+        _⇒_ : Type → Type → Type
+        `ℕ : Type
+
+    infixl 5  _,_⦂_
+
+    data Context : Set where
+        ∅     : Context
+        _,_⦂_ : Context → Id → Type → Context
+    
+    infix  4  _∋_⦂_
+
+    Context→List_Id×Type_ : Context → List (Id × Type)
+    Context→List_Id×Type_ ∅ = []
+    Context→List_Id×Type_ (context , x ⦂ t) = 
+        (x , t) ∷ (Context→List_Id×Type_ context) 
+
+    List_Id×Type_→Context : List (Id × Type) → Context
+    List_Id×Type_→Context [] = ∅
+    List_Id×Type_→Context ((x , t) ∷ list) = 
+        (List_Id×Type_→Context list), x ⦂ t
+
+    Context_from∘to_List_Id×Type_ : (x : Context) 
+        → ((List_Id×Type_→Context ∘ Context→List_Id×Type_) x) ≡ x
+    Context_from∘to_List_Id×Type_ ∅ = refl
+    Context_from∘to_List_Id×Type_ (context , x ⦂ t) = 
+        let
+            ind = Context_from∘to_List_Id×Type_ context
+        in 
+            cong (λ context → context , x ⦂ t) ind
+
+    Context_to∘from_List_Id×Type_ : (list : List (Id × Type))
+        → ((Context→List_Id×Type_ ∘ List_Id×Type_→Context) list) ≡ list
+    Context_to∘from_List_Id×Type_ [] = refl
+    Context_to∘from_List_Id×Type_ ((x , t) ∷ list) = 
+        let
+            ind = Context_to∘from_List_Id×Type_ list
+        in
+            cong (λ list → (x , t) ∷ list) ind
+
+    Context-≃ : Context ≃ List (Id × Type)
+    Context-≃ = 
+        record { 
+            to = Context→List_Id×Type_; 
+            from = List_Id×Type_→Context; 
+            from∘to = Context_from∘to_List_Id×Type_; 
+            to∘from = Context_to∘from_List_Id×Type_ 
+        }
+
+    data _∋_⦂_ : Context → Id → Type → Set where
+
+        Z : ∀ {Γ x A}
+            ------------------
+            → (Γ , x ⦂ A) ∋ x ⦂ A
+
+        S : ∀ {Γ x y A B}
+            → x ≢ y
+            → Γ ∋ x ⦂ A
+            ------------------
+            → (Γ , y ⦂ B) ∋ x ⦂ A
+
+    infix  4  _⊢_⦂_
+
+    data _⊢_⦂_ : Context → Term → Type → Set where
+
+        -- Axiom
+        ⊢` : ∀ {Γ x A}
+            → Γ ∋ x ⦂ A
+            -----------
+            → Γ ⊢ ` x ⦂ A
+
+        -- ⇒-I
+        ⊢ƛ : ∀ {Γ x N A B}
+            → Γ , x ⦂ A ⊢ N ⦂ B
+            -------------------
+            → Γ ⊢ ƛ x ⇒ N ⦂ A ⇒ B
+
+        -- ⇒-E
+        _·_ : ∀ {Γ L M A B}
+            → Γ ⊢ L ⦂ A ⇒ B
+            → Γ ⊢ M ⦂ A
+            -------------
+            → Γ ⊢ L · M ⦂ B
+
+        -- ℕ-I₁
+        ⊢zero : ∀ {Γ}
+            --------------
+            → Γ ⊢ `zero ⦂ `ℕ
+
+        -- ℕ-I₂
+        ⊢suc : ∀ {Γ M}
+            → Γ ⊢ M ⦂ `ℕ
+            ---------------
+            → Γ ⊢ `suc M ⦂ `ℕ
+
+        -- ℕ-E
+        ⊢case : ∀ {Γ L M x N A}
+            → Γ ⊢ L ⦂ `ℕ
+            → Γ ⊢ M ⦂ A
+            → Γ , x ⦂ `ℕ ⊢ N ⦂ A
+            -------------------------------------
+            → Γ ⊢ case L [zero⇒ M |suc x ⇒ N ] ⦂ A
+
+        ⊢μ : ∀ {Γ x M A}
+            → Γ , x ⦂ A ⊢ M ⦂ A
+            -----------------
+            → Γ ⊢ (μ x ⇒ M) ⦂ A
+   
