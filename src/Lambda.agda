@@ -381,4 +381,4 @@ module Lambda where
             → Γ , x ⦂ A ⊢ M ⦂ A
             -----------------
             → Γ ⊢ (μ x ⇒ M) ⦂ A
-   
+    
